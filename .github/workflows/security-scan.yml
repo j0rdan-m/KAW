@@ -38,6 +38,10 @@ jobs:
           exit-code: '1'
           severity: 'CRITICAL,HIGH,MEDIUM,LOW'
 
+      - name: Debug SARIF files
+        continue-on-error: true
+        run: ls -l . && cat trivy-results.sarif || echo "No trivy-results.sarif file"
+
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
         with:
@@ -54,6 +58,11 @@ jobs:
         continue-on-error: true
         run: |
           semgrep scan --verbose --sarif --output semgrep-results.sarif --config auto .
+  
+      - name: Debug SARIF files
+        continue-on-error: true
+        run: ls -l . && cat semgrep-results.sarif || echo "No semgrep-results.sarif file"
+        
       - name: Upload Semgrep SARIF Results
         uses: github/codeql-action/upload-sarif@v3
         with:
@@ -76,6 +85,10 @@ jobs:
           output_format: sarif
           output_file_path: checkov-results.sarif
 
+      - name: Debug SARIF files
+        continue-on-error: true
+        run: ls -l . && cat checkov-results.sarif || echo "No checkov-results.sarif file"
+
       # Upload des résultats dans GitHub Security
       - name: Upload Checkov SARIF Results
         uses: github/codeql-action/upload-sarif@v3
@@ -94,6 +107,10 @@ jobs:
           fail_on: high
           disable_secrets: true
           type: ansible
+
+      - name: Debug SARIF files
+        continue-on-error: true
+        run: ls -l . && cat kics-results/results.sarif || echo "No kics-results/results.sarif file"
           
       - name: Upload SARIF file
         uses: github/codeql-action/upload-sarif@v3
