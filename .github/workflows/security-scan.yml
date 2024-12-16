@@ -87,13 +87,13 @@ jobs:
 
       - name: Debug SARIF files
         continue-on-error: true
-        run: ls -l . && cat checkov-results/results.sarif || echo "No checkov-results/results.sarif file" && cd checkov-results && ls -l
+        run: ls -l . && cat checkov-results/results_sarif.sarif || echo "No checkov-results/results_sarif.sarif file" 
 
       # Upload des résultats dans GitHub Security
       - name: Upload Checkov SARIF Results
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: checkov-results/results.sarif
+          sarif_file: checkov-results/results_sarif.sarif
 
       # 5. Analyse avec Checkov
       - name: Run KICS Scan
