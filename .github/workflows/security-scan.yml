@@ -83,11 +83,11 @@ jobs:
           directory: .
           framework: ansible
           output_format: sarif
-          output_file_path: checkov-results.sarif
+          output_file_path: checkov-results
 
       - name: Debug SARIF files
         continue-on-error: true
-        run: ls -l . && cat checkov-results.sarif || echo "No checkov-results.sarif file"
+        run: ls -l . && cat checkov-results/results.sarif || echo "No checkov-results/results.sarif file"
 
       # Upload des résultats dans GitHub Security
       - name: Upload Checkov SARIF Results
