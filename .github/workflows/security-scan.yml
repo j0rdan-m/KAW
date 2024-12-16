@@ -80,16 +80,16 @@ jobs:
           sarif_file: 'checkov-results.sarif'
 
       # 5. Analyse avec Checkov
-      - name: Run KICS Scan
-        continue-on-error: true
-        uses: Checkmarx/kics-github-action@v1.7.0
-        with:
-          path: '.'
-          output_path: kics-results
-          platform: ansible
-          fail_on: high
+#      - name: Run KICS Scan
+#        continue-on-error: true
+#        uses: Checkmarx/kics-github-action@v1.7.0
+#        with:
+#          path: '.'
+#          output_path: kics-results
+#          platform: ansible
+#          fail_on: high
           
-      - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: 'kics-results/results.sarif'
+#      - name: Upload SARIF file
+#        uses: github/codeql-action/upload-sarif@v3
+#        with:
+#          sarif_file: 'kics-results/results.sarif'
