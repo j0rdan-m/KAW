@@ -14,19 +14,22 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.x'
       
       - name: Install dependencies
         run: |
+          python3 -m pip install --user pipx
+          python3 -m pipx ensurepath
           pip install pyyaml requests
       
       - name: Scan playbook for CVEs
         run: |
-          python <<EOF
+      - name: Install dependencies
+        run: |
+          pip install pyyaml requests
+
+      - name: Scan playbooks for CVEs
+        run: |
+          python3 <<EOF
           import yaml
           import requests
           import os
@@ -36,24 +39,30 @@ jobs:
               with open(file_path, 'r') as file:
                   playbook = yaml.safe_load(file)
               
+              print(f"\nScanning {file_path}")
               versions = []
               for play in playbook:
                   if 'tasks' in play:
                       for task in play['tasks']:
                           if 'apt' in task:
-                              versions.append(task['apt'].get('name', ''))
+                              package = task['apt'].get('name', '')
+                              if package:
+                                  versions.append(package)
+                                  print(f"Found package: {package}")
               
               for version in versions:
-                  if version:
-                      response = requests.get(f'https://services.nvd.nist.gov/rest/json/cves/1.0?keyword={version}')
-                      if response.json()['totalResults'] > 0:
-                          print(f"Potential vulnerability found for {version} in {file_path}")
+                  print(f"Checking {version} for vulnerabilities...")
+                  response = requests.get(f'https://services.nvd.nist.gov/rest/json/cves/1.0?keyword={version}')
+                  if response.json()['totalResults'] > 0:
+                      print(f"  WARNING: Potential vulnerability found for {version}")
+                  else:
+                      print(f"  No known vulnerabilities found for {version}")
 
           # Scan all YAML files in the playbooks directory
           for playbook_file in glob.glob('playbooks/*.yml'):
-              print(f"Scanning {playbook_file}")
               scan_playbook(playbook_file)
           EOF
+
 
       # 1. Scanner de vulnérabilités avec Trivy
       - name: Run Trivy vulnerability scanner in FS mode - table logs
