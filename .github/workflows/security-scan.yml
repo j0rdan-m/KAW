@@ -29,22 +29,30 @@ jobs:
           python <<EOF
           import yaml
           import requests
-          
-          # Load and parse the Ansible playbook
-          with open('your_playbook.yml', 'r') as file:
-              playbook = yaml.safe_load(file)
-          
-          # Extract software versions (this is a simplified example)
-          versions = []
-          for task in playbook[0]['tasks']:
-              if 'apt' in task:
-                  versions.append(task['apt']['name'])
-          
-          # Check versions against NVD (simplified)
-          for version in versions:
-              response = requests.get(f'https://services.nvd.nist.gov/rest/json/cves/1.0?keyword={version}')
-              if response.json()['totalResults'] > 0:
-                  print(f"Potential vulnerability found for {version}")
+          import os
+          import glob
+
+          def scan_playbook(file_path):
+              with open(file_path, 'r') as file:
+                  playbook = yaml.safe_load(file)
+              
+              versions = []
+              for play in playbook:
+                  if 'tasks' in play:
+                      for task in play['tasks']:
+                          if 'apt' in task:
+                              versions.append(task['apt'].get('name', ''))
+              
+              for version in versions:
+                  if version:
+                      response = requests.get(f'https://services.nvd.nist.gov/rest/json/cves/1.0?keyword={version}')
+                      if response.json()['totalResults'] > 0:
+                          print(f"Potential vulnerability found for {version} in {file_path}")
+
+          # Scan all YAML files in the playbooks directory
+          for playbook_file in glob.glob('playbooks/*.yml'):
+              print(f"Scanning {playbook_file}")
+              scan_playbook(playbook_file)
           EOF
 
       # 1. Scanner de vulnérabilités avec Trivy
