@@ -34,62 +34,40 @@ jobs:
           import requests
           import glob
           import os
-          import subprocess
-          import sys
 
-          def check_package_manager(manager):
-              try:
-                  if manager == 'pip':
-                      subprocess.run([sys.executable, '-m', 'pip', '--version'], check=True)
-                  else:
-                      subprocess.run([manager, '--version'], check=True)
-                  print(f"{manager} is installed")
+          def check_vulnerability(package, version):
+              print(f"Checking {package} version {version} for vulnerabilities...")
+              response = requests.get(f'https://services.nvd.nist.gov/rest/json/cves/1.0?keyword={package}%20{version}')
+              if response.json()['totalResults'] > 0:
+                  print(f"  WARNING: Potential vulnerability found for {package} version {version}")
                   return True
-              except subprocess.CalledProcessError:
-                  print(f"{manager} is not installed")
-                  return False
-              except FileNotFoundError:
-                  print(f"{manager} is not found")
+              else:
+                  print(f"  No known vulnerabilities found for {package} version {version}")
                   return False
 
           def scan_playbook(file_path):
-              print(f"\nAttempting to scan {file_path}")
-              try:
-                  with open(file_path, 'r') as file:
-                      playbook = yaml.safe_load(file)
-                  
-                  print(f"Successfully loaded {file_path}")
-                  versions = []
-                  for play in playbook:
-                      if isinstance(play, dict) and 'tasks' in play:
-                          for task in play['tasks']:
-                              if isinstance(task, dict):
-                                  for manager in ['apt', 'win_chocolatey', 'winget', 'pip', 'npm']:
-                                      if manager in task:
-                                          package = task[manager].get('name', '')
-                                          if package:
-                                              versions.append(package)
-                                              print(f"Found {manager} package: {package}")
-                  
-                  if not versions:
-                      print(f"No packages found in {file_path}")
-                  
-                  for version in versions:
-                      print(f"Checking {version} for vulnerabilities...")
-                      response = requests.get(f'https://services.nvd.nist.gov/rest/json/cves/1.0?keyword={version}')
-                      if response.json()['totalResults'] > 0:
-                          print(f"  WARNING: Potential vulnerability found for {version}")
-                      else:
-                          print(f"  No known vulnerabilities found for {version}")
-              except Exception as e:
-                  print(f"Error processing {file_path}: {str(e)}")
-
-          print("Script started")
-          print(f"Current working directory: {os.getcwd()}")
-
-          package_managers = ['apt', 'winget', 'chocolatey', 'pip', 'npm']
-          for manager in package_managers:
-              check_package_manager(manager)
+              print(f"\nScanning {file_path}")
+              with open(file_path, 'r') as file:
+                  playbook = yaml.safe_load(file)
+              
+              vulnerabilities_found = False
+              for play in playbook:
+                  if 'tasks' in play:
+                      for task in play['tasks']:
+                          if isinstance(task, dict):
+                              for manager in ['apt', 'winget', 'win_chocolatey', 'npm', 'pip']:
+                                  if manager in task:
+                                      package = task[manager].get('name', '')
+                                      version = task[manager].get('version', '')
+                                      if package and version:
+                                          if check_vulnerability(package, version):
+                                              vulnerabilities_found = True
+                                              print(f"Vulnerability found in task: {task['name']}")
+              
+              if vulnerabilities_found:
+                  print(f"Vulnerabilities found in {file_path}")
+              else:
+                  print(f"No vulnerabilities found in {file_path}")
 
           playbook_files = glob.glob('*.yml')
           print(f"Found {len(playbook_files)} playbook files")
@@ -99,8 +77,6 @@ jobs:
           else:
               for playbook_file in playbook_files:
                   scan_playbook(playbook_file)
-
-          print("Script finished")
           EOF
 
 
