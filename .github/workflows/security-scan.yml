@@ -28,10 +28,9 @@ jobs:
           report_format: sarif
 
       - name: Upload Markdown report as artifact
-        uses: actions/upload-artifact@v3
+        uses: github/codeql-action/upload-sarif@v3
         with:
-          name: vulnerability-report
-          path: vulnerability_report.md
+          sarif_file: vulnerability_report.sarif
 
       # 1. Scanner de vulnérabilités avec Trivy
       - name: Run Trivy vulnerability scanner in FS mode - table logs
