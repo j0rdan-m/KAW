@@ -91,7 +91,7 @@ jobs:
           for manager in package_managers:
               check_package_manager(manager)
 
-          playbook_files = glob.glob('playbooks/*.yml')
+          playbook_files = glob.glob('*.yml')
           print(f"Found {len(playbook_files)} playbook files")
 
           if not playbook_files:
