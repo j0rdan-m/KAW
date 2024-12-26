@@ -22,7 +22,7 @@ jobs:
           pip install pyyaml requests
 
       - name: Run Vulnerability Scanner Action
-        uses: j0rdan-m/vulnerability-scanner-action/.github/actions/vulnerability-scanner@0.0.1
+        uses: j0rdan-m/ansible-vulnerability-scanner/.github/actions/ansible-vulnerability-scanner@0.0.1
         with:
           artifact_path: ''  # Path to your Ansible playbooks
 
