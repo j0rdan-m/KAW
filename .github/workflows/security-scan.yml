@@ -34,6 +34,23 @@ jobs:
           import requests
           import glob
           import os
+          import subprocess
+          import sys
+
+          def check_package_manager(manager):
+              try:
+                  if manager == 'pip':
+                      subprocess.run([sys.executable, '-m', 'pip', '--version'], check=True)
+                  else:
+                      subprocess.run([manager, '--version'], check=True)
+                  print(f"{manager} is installed")
+                  return True
+              except subprocess.CalledProcessError:
+                  print(f"{manager} is not installed")
+                  return False
+              except FileNotFoundError:
+                  print(f"{manager} is not found")
+                  return False
 
           def scan_playbook(file_path):
               print(f"\nAttempting to scan {file_path}")
@@ -46,11 +63,13 @@ jobs:
                   for play in playbook:
                       if isinstance(play, dict) and 'tasks' in play:
                           for task in play['tasks']:
-                              if isinstance(task, dict) and 'apt' in task:
-                                  package = task['apt'].get('name', '')
-                                  if package:
-                                      versions.append(package)
-                                      print(f"Found package: {package}")
+                              if isinstance(task, dict):
+                                  for manager in ['apt', 'chocolatey', 'winget', 'pip', 'npm']:
+                                      if manager in task:
+                                          package = task[manager].get('name', '')
+                                          if package:
+                                              versions.append(package)
+                                              print(f"Found {manager} package: {package}")
                   
                   if not versions:
                       print(f"No packages found in {file_path}")
@@ -67,7 +86,12 @@ jobs:
 
           print("Script started")
           print(f"Current working directory: {os.getcwd()}")
-          playbook_files = glob.glob('*.yml')
+
+          package_managers = ['apt', 'winget', 'chocolatey', 'pip', 'npm']
+          for manager in package_managers:
+              check_package_manager(manager)
+
+          playbook_files = glob.glob('playbooks/*.yml')
           print(f"Found {len(playbook_files)} playbook files")
 
           if not playbook_files:
