@@ -14,6 +14,43 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+      
+      - name: Install dependencies
+        run: |
+          pip install ansible-lint
+          pip install pyyaml requests
+      
+      - name: Run ansible-lint
+        run: ansible-lint your_playbook.yml
+      
+      - name: Scan playbook for CVEs
+        run: |
+          python <<EOF
+          import yaml
+          import requests
+          
+          # Load and parse the Ansible playbook
+          with open('your_playbook.yml', 'r') as file:
+              playbook = yaml.safe_load(file)
+          
+          # Extract software versions (this is a simplified example)
+          versions = []
+          for task in playbook[0]['tasks']:
+              if 'apt' in task:
+                  versions.append(task['apt']['name'])
+          
+          # Check versions against NVD (simplified)
+          for version in versions:
+              response = requests.get(f'https://services.nvd.nist.gov/rest/json/cves/1.0?keyword={version}')
+              if response.json()['totalResults'] > 0:
+                  print(f"Potential vulnerability found for {version}")
+          EOF
+
       # 1. Scanner de vulnérabilités avec Trivy
       - name: Run Trivy vulnerability scanner in FS mode - table logs
         continue-on-error: true
