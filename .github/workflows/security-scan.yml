@@ -142,10 +142,9 @@ jobs:
               print("No vulnerabilities found.")
           EOF
 
-      - name: List directory contents
-        run: |
-          echo "Listing contents of the current directory:"
-          ls -R
+      - name: Debug SARIF files
+        continue-on-error: true
+        run: ls -l . && cat vulnerability_report.sarif || echo "No vulnerability_report.sarif file"
 
       - name: Upload SARIF report to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
