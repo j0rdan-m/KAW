@@ -20,12 +20,6 @@ jobs:
           python3 -m pip install --user pipx
           python3 -m pipx ensurepath
           pip install pyyaml requests
-      
-      - name: Scan playbook for CVEs
-        run: |
-      - name: Install dependencies
-        run: |
-          pip install pyyaml requests
 
       - name: Scan playbooks for CVEs
         run: |
@@ -39,21 +33,20 @@ jobs:
           def check_vulnerability(package, version):
               print(f"Checking {package} version {version} for vulnerabilities...")
               try:
-                  response = requests.get(f'https://services.nvd.nist.gov/rest/json/cves/2.0?keywordSearch={package}%20{version}')
+                  response = requests.get(f'https://services.nvd.nist.gov/rest/json/cves/1.0?keyword={package}%20{version}')
                   response.raise_for_status()
                   data = response.json()
                   if data['totalResults'] > 0:
-                      print(f"  WARNING: Potential vulnerability found for {package} version {version}")
-                      return True
+                      return data['vulnerabilities']
                   else:
                       print(f"  No known vulnerabilities found for {package} version {version}")
-                      return False
+                      return []
               except requests.exceptions.RequestException as e:
                   print(f"Error checking vulnerabilities: {e}")
-                  return False
+                  return []
               except ValueError:
                   print(f"Error decoding JSON response for {package} version {version}")
-                  return False
+                  return []
 
           def scan_playbook(file_path):
               print(f"\nScanning {file_path}")
@@ -70,13 +63,13 @@ jobs:
                                       package = task[manager].get('name', '')
                                       version = task[manager].get('version', '')
                                       if package and version:
-                                          if check_vulnerability(package, version):
+                                          found_vulnerabilities = check_vulnerability(package, version)
+                                          for vulnerability in found_vulnerabilities:
                                               vulnerabilities_found.append({
                                                   "ruleId": f"{package}-{version}",
                                                   "severity": "warning",
                                                   "message": f"Potential vulnerability found for {package} version {version}",
                                                   "file": file_path,
-                                                  "line": None  # Add logic to capture line numbers if needed
                                               })
 
               return vulnerabilities_found
@@ -84,7 +77,7 @@ jobs:
           def generate_sarif(vulnerabilities):
               sarif_report = {
                   "$schema": "https://json.schemastore.org/sarif-2.1.0",
-                  "version": 2,
+                  "version": "2.1.0",  # Ensure this is a string
                   "runs": [{
                       "tool": {
                           "driver": {
@@ -99,30 +92,35 @@ jobs:
 
               # Add rules and results to the SARIF report
               for vulnerability in vulnerabilities:
+                  rule_id = f"{vulnerability['ruleId']}"
                   sarif_report["runs"][0]["tool"]["driver"]["rules"].append({
-                      "id": vulnerability["ruleId"],
-                      "shortDescription": {"text": vulnerability["message"]},
-                      "fullDescription": {"text": vulnerability["message"]},
-                      "defaultConfiguration": {"level": vulnerability["severity"]},
+                      "id": rule_id,
+                      "shortDescription": {"text": vulnerability.get("message", "Unknown Vulnerability")},
+                      "fullDescription": {"text": vulnerability.get("message", "No description available.")},
+                      "defaultConfiguration": {"level": vulnerability.get("severity", "warning")},
                   })
                   sarif_report["runs"][0]["results"].append({
-                      "ruleId": vulnerability["ruleId"],
+                      "ruleId": rule_id,
                       "message": {
-                          "text": vulnerability["message"]
+                          "text": vulnerability.get("message", "")
                       },
                       "locations": [{
                           "physicalLocation": {
                               "artifactLocation": {
                                   "uri": vulnerability["file"]
                               },
-                              # Add line number logic if needed
+                              # Placeholder for line and column numbers
+                              "region": {
+                                  "startLine": 1,  # Replace with actual line number if available
+                                  "startColumn": 1  # Replace with actual column number if available
+                              }
                           }
                       }]
                   })
 
               return sarif_report
 
-          playbook_files = glob.glob('*.yml')
+          playbook_files = glob.glob('playbooks/*.yml')
           all_vulnerabilities = []
 
           if not playbook_files:
