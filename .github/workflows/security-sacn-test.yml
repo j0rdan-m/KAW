@@ -20,6 +20,10 @@ jobs:
         with:
           artifact_path: '.'  # Path to your Ansible playbooks
           report_format: sarif
+      
+      - name: Read Sarif file
+        run: |
+          cat vulnerability_report.sarif
 
       - name: Upload sarif report as artifact
         uses: github/codeql-action/upload-sarif@v3
