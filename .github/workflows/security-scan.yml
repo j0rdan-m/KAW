@@ -34,15 +34,25 @@ jobs:
           import requests
           import glob
           import os
+          import time
 
           def check_vulnerability(package, version):
               print(f"Checking {package} version {version} for vulnerabilities...")
-              response = requests.get(f'https://services.nvd.nist.gov/rest/json/cves/1.0?keyword={package}%20{version}')
-              if response.json()['totalResults'] > 0:
-                  print(f"  WARNING: Potential vulnerability found for {package} version {version}")
-                  return True
-              else:
-                  print(f"  No known vulnerabilities found for {package} version {version}")
+              try:
+                  response = requests.get(f'https://services.nvd.nist.gov/rest/json/cves/1.0?keyword={package}%20{version}')
+                  response.raise_for_status()
+                  data = response.json()
+                  if data['totalResults'] > 0:
+                      print(f"  WARNING: Potential vulnerability found for {package} version {version}")
+                      return True
+                  else:
+                      print(f"  No known vulnerabilities found for {package} version {version}")
+                      return False
+              except requests.exceptions.RequestException as e:
+                  print(f"Error checking vulnerabilities: {e}")
+                  return False
+              except ValueError:
+                  print(f"Error decoding JSON response for {package} version {version}")
                   return False
 
           def scan_playbook(file_path):
@@ -62,7 +72,8 @@ jobs:
                                       if package and version:
                                           if check_vulnerability(package, version):
                                               vulnerabilities_found = True
-                                              print(f"Vulnerability found in task: {task['name']}")
+                                              print(f"Vulnerability found in task: {task.get('name', 'Unnamed task')}")
+                                          time.sleep(1)  # Add a 1-second delay between requests
               
               if vulnerabilities_found:
                   print(f"Vulnerabilities found in {file_path}")
