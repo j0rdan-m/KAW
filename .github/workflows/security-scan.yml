@@ -28,7 +28,6 @@ jobs:
           import requests
           import glob
           import os
-          import json
 
           def check_vulnerability(package, version):
               print(f"Checking {package} version {version} for vulnerabilities...")
@@ -66,66 +65,27 @@ jobs:
                                           found_vulnerabilities = check_vulnerability(package, version)
                                           for vulnerability in found_vulnerabilities:
                                               vulnerabilities_found.append({
-                                                  "ruleId": f"{package}-{version}",
+                                                  "package": package,
+                                                  "version": version,
+                                                  "file": file_path,
                                                   "severity": "warning",
                                                   "message": f"Potential vulnerability found for {package} version {version}",
-                                                  "file": file_path,
                                               })
 
               return vulnerabilities_found
 
-          def generate_sarif(vulnerabilities):
-              sarif_report = {
-                  "$schema": "https://json.schemastore.org/sarif-2.1.0",
-                  "version": "2.1.0",  # Ensure this is a string
-                  "runs": [{
-                      "tool": {
-                          "driver": {
-                              "name": "Ansible Playbook Vulnerability Scanner",
-                              "informationUri": "https://github.com/your-repo",
-                              "rules": []
-                          }
-                      },
-                      "results": []
-                  }]
-              }
-
-              seen_rule_ids = set()  # Track seen rule IDs to avoid duplicates
-
-              # Add rules and results to the SARIF report
-              for vulnerability in vulnerabilities:
-                  rule_id = f"{vulnerability['ruleId']}"
-                  
-                  # Ensure unique rule IDs
-                  if rule_id not in seen_rule_ids:
-                      seen_rule_ids.add(rule_id)
-                      sarif_report["runs"][0]["tool"]["driver"]["rules"].append({
-                          "id": rule_id,
-                          "shortDescription": {"text": vulnerability.get("message", "Unknown Vulnerability")},
-                          "fullDescription": {"text": vulnerability.get("message", "No description available.")},
-                          "defaultConfiguration": {"level": vulnerability.get("severity", "warning")},
-                      })
-
-                  sarif_report["runs"][0]["results"].append({
-                      "ruleId": rule_id,
-                      "message": {
-                          "text": vulnerability.get("message", "")
-                      },
-                      "locations": [{
-                          "physicalLocation": {
-                              "artifactLocation": {
-                                  "uri": vulnerability["file"]
-                              },
-                              # Placeholder for line and column numbers
-                              "region": {
-                                  "startLine": 1,  # Replace with actual line number if available
-                                  "startColumn": 1  # Replace with actual column number if available
-                              }
-                          }
-                      }]
-                  })
-
-              return sarif_report
+          def generate_markdown(vulnerabilities):
+              markdown_content = "# Vulnerability Report\n\n"
+              if not vulnerabilities:
+                  markdown_content += "No vulnerabilities found.\n"
+              else:
+                  markdown_content += "| Package | Version | File | Severity | Message |\n"
+                  markdown_content += "| ------- | ------- | ---- | -------- | ------- |\n"
+                  for vuln in vulnerabilities:
+                      markdown_content += f"| {vuln['package']} | {vuln['version']} | {vuln['file']} | {vuln['severity']} | {vuln['message']} |\n"
+              
+              with open('vulnerability_report.md', 'w') as md_file:
+                  md_file.write(markdown_content)
 
           playbook_files = glob.glob('*.yml')
           all_vulnerabilities = []
@@ -137,25 +97,16 @@ jobs:
                   vulnerabilities = scan_playbook(playbook_file)
                   all_vulnerabilities.extend(vulnerabilities)
 
-          # Generate SARIF report if there are vulnerabilities
-          if all_vulnerabilities:
-              sarif_report = generate_sarif(all_vulnerabilities)
-              with open('vulnerability_report.sarif', 'w') as sarif_file:
-                  json.dump(sarif_report, sarif_file, indent=2)
-              print("SARIF report generated: vulnerability_report.sarif")
-          else:
-              print("No vulnerabilities found.")
+          # Generate Markdown report if there are vulnerabilities
+          generate_markdown(all_vulnerabilities)
+          print("Markdown report generated: vulnerability_report.md")
           EOF
 
-      - name: Debug SARIF files
-        continue-on-error: true
-        run: ls -l . && cat vulnerability_report.sarif || echo "No vulnerability_report.sarif file"
-
-      - name: Upload SARIF report to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
+      - name: Upload Markdown report as artifact
+        uses: actions/upload-artifact@v2
         with:
-          sarif_file: vulnerability_report.sarif
-
+          name: vulnerability-report
+          path: vulnerability_report.md
 
       # 1. Scanner de vulnérabilités avec Trivy
       - name: Run Trivy vulnerability scanner in FS mode - table logs
