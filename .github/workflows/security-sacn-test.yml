@@ -1,0 +1,29 @@
+name: build
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+permissions: 
+  contents: read
+  security-events: write
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Vulnerability Scanner Action
+        uses: j0rdan-m/ansible-vulnerability-scanner/.github/actions/vulnerability-scanner@main
+        with:
+          artifact_path: '.'  # Path to your Ansible playbooks
+          report_format: sarif
+
+      - name: Upload sarif report as artifact
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: vulnerability_report.sarif
+
+    
