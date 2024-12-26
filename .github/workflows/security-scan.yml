@@ -34,7 +34,7 @@ jobs:
           import requests
           import glob
           import os
-          import time
+          import json
 
           def check_vulnerability(package, version):
               print(f"Checking {package} version {version} for vulnerabilities...")
@@ -60,7 +60,7 @@ jobs:
               with open(file_path, 'r') as file:
                   playbook = yaml.safe_load(file)
               
-              vulnerabilities_found = False
+              vulnerabilities_found = []
               for play in playbook:
                   if 'tasks' in play:
                       for task in play['tasks']:
@@ -71,24 +71,81 @@ jobs:
                                       version = task[manager].get('version', '')
                                       if package and version:
                                           if check_vulnerability(package, version):
-                                              vulnerabilities_found = True
-                                              print(f"Vulnerability found in task: {task.get('name', 'Unnamed task')}")
-                                          time.sleep(1)  # Add a 1-second delay between requests
-              
-              if vulnerabilities_found:
-                  print(f"Vulnerabilities found in {file_path}")
-              else:
-                  print(f"No vulnerabilities found in {file_path}")
+                                              vulnerabilities_found.append({
+                                                  "ruleId": f"{package}-{version}",
+                                                  "severity": "warning",
+                                                  "message": f"Potential vulnerability found for {package} version {version}",
+                                                  "file": file_path,
+                                                  "line": None  # Add logic to capture line numbers if needed
+                                              })
+
+              return vulnerabilities_found
+
+          def generate_sarif(vulnerabilities):
+              sarif_report = {
+                  "$schema": "https://json.schemastore.org/sarif-2.1.0",
+                  "version": 2,
+                  "runs": [{
+                      "tool": {
+                          "driver": {
+                              "name": "Ansible Playbook Vulnerability Scanner",
+                              "informationUri": "https://github.com/your-repo",
+                              "rules": []
+                          }
+                      },
+                      "results": []
+                  }]
+              }
+
+              # Add rules and results to the SARIF report
+              for vulnerability in vulnerabilities:
+                  sarif_report["runs"][0]["tool"]["driver"]["rules"].append({
+                      "id": vulnerability["ruleId"],
+                      "shortDescription": {"text": vulnerability["message"]},
+                      "fullDescription": {"text": vulnerability["message"]},
+                      "defaultConfiguration": {"level": vulnerability["severity"]},
+                  })
+                  sarif_report["runs"][0]["results"].append({
+                      "ruleId": vulnerability["ruleId"],
+                      "message": {
+                          "text": vulnerability["message"]
+                      },
+                      "locations": [{
+                          "physicalLocation": {
+                              "artifactLocation": {
+                                  "uri": vulnerability["file"]
+                              },
+                              # Add line number logic if needed
+                          }
+                      }]
+                  })
+
+              return sarif_report
 
           playbook_files = glob.glob('*.yml')
-          print(f"Found {len(playbook_files)} playbook files")
+          all_vulnerabilities = []
 
           if not playbook_files:
               print("No playbook files found in the playbooks directory.")
           else:
               for playbook_file in playbook_files:
-                  scan_playbook(playbook_file)
+                  vulnerabilities = scan_playbook(playbook_file)
+                  all_vulnerabilities.extend(vulnerabilities)
+
+          # Generate SARIF report if there are vulnerabilities
+          if all_vulnerabilities:
+              sarif_report = generate_sarif(all_vulnerabilities)
+              with open('vulnerability_report.sarif', 'w') as sarif_file:
+                  json.dump(sarif_report, sarif_file, indent=2)
+              print("SARIF report generated: vulnerability_report.sarif")
+          else:
+              print("No vulnerabilities found.")
           EOF
+
+      - name: Upload SARIF report to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif-file: vulnerability_report.sarif
 
 
       # 1. Scanner de vulnérabilités avec Trivy
