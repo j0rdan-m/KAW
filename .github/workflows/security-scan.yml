@@ -103,7 +103,7 @@ jobs:
           EOF
 
       - name: Upload Markdown report as artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: vulnerability-report
           path: vulnerability_report.md
