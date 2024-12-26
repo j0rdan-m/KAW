@@ -64,7 +64,7 @@ jobs:
                       if isinstance(play, dict) and 'tasks' in play:
                           for task in play['tasks']:
                               if isinstance(task, dict):
-                                  for manager in ['apt', 'chocolatey', 'winget', 'pip', 'npm']:
+                                  for manager in ['apt', 'win_chocolatey', 'winget', 'pip', 'npm']:
                                       if manager in task:
                                           package = task[manager].get('name', '')
                                           if package:
