@@ -27,7 +27,7 @@ jobs:
           artifact_path: '.'  # Path to your Ansible playbooks
           report_format: sarif
 
-      - name: Upload Markdown report as artifact
+      - name: Upload sarif report as artifact
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: vulnerability_report.sarif
