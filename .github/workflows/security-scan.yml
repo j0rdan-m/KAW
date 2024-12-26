@@ -33,41 +33,50 @@ jobs:
           import yaml
           import requests
           import glob
+          import os
 
           def scan_playbook(file_path):
-              with open(file_path, 'r') as file:
-                  playbook = yaml.safe_load(file)
-              
-              print(f"\nScanning {file_path}")
-              versions = []
-              for play in playbook:
-                  if 'tasks' in play:
-                      for task in play['tasks']:
-                          if 'apt' in task:
-                              package = task['apt'].get('name', '')
-                              if package:
-                                  versions.append(package)
-                                  print(f"Found package: {package}")
-              
-              if not versions:
-                  print("No packages found in this playbook.")
-                  return
-              
-              for version in versions:
-                  print(f"Checking {version} for vulnerabilities...")
-                  response = requests.get(f'https://services.nvd.nist.gov/rest/json/cves/1.0?keyword={version}')
-                  if response.json()['totalResults'] > 0:
-                      print(f"  WARNING: Potential vulnerability found for {version}")
-                  else:
-                      print(f"  No known vulnerabilities found for {version}")
+              print(f"\nAttempting to scan {file_path}")
+              try:
+                  with open(file_path, 'r') as file:
+                      playbook = yaml.safe_load(file)
+                  
+                  print(f"Successfully loaded {file_path}")
+                  versions = []
+                  for play in playbook:
+                      if isinstance(play, dict) and 'tasks' in play:
+                          for task in play['tasks']:
+                              if isinstance(task, dict) and 'apt' in task:
+                                  package = task['apt'].get('name', '')
+                                  if package:
+                                      versions.append(package)
+                                      print(f"Found package: {package}")
+                  
+                  if not versions:
+                      print(f"No packages found in {file_path}")
+                  
+                  for version in versions:
+                      print(f"Checking {version} for vulnerabilities...")
+                      response = requests.get(f'https://services.nvd.nist.gov/rest/json/cves/1.0?keyword={version}')
+                      if response.json()['totalResults'] > 0:
+                          print(f"  WARNING: Potential vulnerability found for {version}")
+                      else:
+                          print(f"  No known vulnerabilities found for {version}")
+              except Exception as e:
+                  print(f"Error processing {file_path}: {str(e)}")
 
-          # Scan all YAML files in the playbooks directory
+          print("Script started")
+          print(f"Current working directory: {os.getcwd()}")
           playbook_files = glob.glob('*.yml')
+          print(f"Found {len(playbook_files)} playbook files")
+
           if not playbook_files:
               print("No playbook files found in the playbooks directory.")
           else:
               for playbook_file in playbook_files:
                   scan_playbook(playbook_file)
+
+          print("Script finished")
           EOF
 
 
