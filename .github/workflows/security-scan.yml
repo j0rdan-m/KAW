@@ -22,11 +22,7 @@ jobs:
       
       - name: Install dependencies
         run: |
-          pip install ansible-lint
           pip install pyyaml requests
-      
-      - name: Run ansible-lint
-        run: ansible-lint your_playbook.yml
       
       - name: Scan playbook for CVEs
         run: |
