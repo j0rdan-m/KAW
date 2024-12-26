@@ -39,7 +39,7 @@ jobs:
           def check_vulnerability(package, version):
               print(f"Checking {package} version {version} for vulnerabilities...")
               try:
-                  response = requests.get(f'https://services.nvd.nist.gov/rest/json/cves/1.0?keyword={package}%20{version}')
+                  response = requests.get(f'https://services.nvd.nist.gov/rest/json/cves/2.0?keywordSearch={package}%20{version}')
                   response.raise_for_status()
                   data = response.json()
                   if data['totalResults'] > 0:
