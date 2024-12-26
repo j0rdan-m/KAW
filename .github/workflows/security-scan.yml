@@ -25,6 +25,7 @@ jobs:
         uses: j0rdan-m/ansible-vulnerability-scanner/.github/actions/vulnerability-scanner@main
         with:
           artifact_path: '.'  # Path to your Ansible playbooks
+          report_format: sarif
 
       - name: Upload Markdown report as artifact
         uses: actions/upload-artifact@v3
