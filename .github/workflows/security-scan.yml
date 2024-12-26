@@ -24,7 +24,7 @@ jobs:
       - name: Scan playbooks for CVEs
         run: |
           python3 <<EOF
-                    import yaml
+          import yaml
           import requests
           import glob
           import os
