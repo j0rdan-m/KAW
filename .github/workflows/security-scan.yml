@@ -32,7 +32,6 @@ jobs:
           python3 <<EOF
           import yaml
           import requests
-          import os
           import glob
 
           def scan_playbook(file_path):
@@ -50,6 +49,10 @@ jobs:
                                   versions.append(package)
                                   print(f"Found package: {package}")
               
+              if not versions:
+                  print("No packages found in this playbook.")
+                  return
+              
               for version in versions:
                   print(f"Checking {version} for vulnerabilities...")
                   response = requests.get(f'https://services.nvd.nist.gov/rest/json/cves/1.0?keyword={version}')
@@ -59,8 +62,12 @@ jobs:
                       print(f"  No known vulnerabilities found for {version}")
 
           # Scan all YAML files in the playbooks directory
-          for playbook_file in glob.glob('playbooks/*.yml'):
-              scan_playbook(playbook_file)
+          playbook_files = glob.glob('playbooks/*.yml')
+          if not playbook_files:
+              print("No playbook files found in the playbooks directory.")
+          else:
+              for playbook_file in playbook_files:
+                  scan_playbook(playbook_file)
           EOF
 
 
