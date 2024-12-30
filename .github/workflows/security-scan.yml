@@ -24,8 +24,10 @@ jobs:
       - name: Run Vulnerability Scanner Action
         uses: j0rdan-m/ansible-vulnerability-scanner/.github/actions/vulnerability-scanner@main
         with:
-          artifact_path: '.'  # Path to your Ansible playbooks
+          artifact_path: '.' 
           report_format: sarif
+          package_manager: win_chocolatey,apt
+          cve_provider: nist
 
       - name: Upload sarif report as artifact
         uses: github/codeql-action/upload-sarif@v3
