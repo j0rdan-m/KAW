@@ -26,11 +26,6 @@ jobs:
           echo "Checking workspace content:"
           ls -l ${{ github.workspace }}
           
-      - name: Debug workspace
-        run: |
-          echo "Listing files in /github/workspace:"
-          ls -l /github/workspace
-          
       - name: Run Vulnerability Scanner Action
         uses: j0rdan-m/ansible-vulnerability-scanner@main
         with:
