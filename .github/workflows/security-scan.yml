@@ -21,6 +21,9 @@ jobs:
           python3 -m pipx ensurepath
           pip install pyyaml requests
 
+      - name: Debug workspace
+        run: ls -l /github/workspace
+        
       - name: Run Vulnerability Scanner Action
         uses: j0rdan-m/ansible-vulnerability-scanner@main
         with:
