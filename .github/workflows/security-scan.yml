@@ -20,7 +20,12 @@ jobs:
           python3 -m pip install --user pipx
           python3 -m pipx ensurepath
           pip install pyyaml requests
-
+          
+      - name: Debug workspace
+        run: |
+          echo "Checking workspace content:"
+          ls -l ${{ github.workspace }}
+          
       - name: Debug workspace
         run: |
           echo "Listing files in /github/workspace:"
