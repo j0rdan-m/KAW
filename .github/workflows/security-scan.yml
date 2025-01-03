@@ -33,6 +33,7 @@ jobs:
           report_format: sarif
           package_manager: win_chocolatey,apt
           cve_provider: nist
+          provider_options: '{"apikey": "${{ secrets.NIST_API_KEY }}"}'
 
       - name: Upload sarif report as artifact
         uses: github/codeql-action/upload-sarif@v3
