@@ -8,18 +8,12 @@ permissions:
   contents: read
   security-events: write
 jobs:
-  build:
-    name: Build
+  ansible-vuln-scan:
+    name: Ansible Vulnerability Scan
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
-      - name: Install dependencies
-        run: |
-          python3 -m pip install --user pipx
-          python3 -m pipx ensurepath
-          pip install pyyaml requests
           
       - name: Debug workspace
         run: |
@@ -39,7 +33,11 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: vulnerability_report.sarif
-
+  
+  trivy-scan:
+    name: Trivy Scan
+    runs-on: ubuntu-20.04
+    steps:
       # 1. Scanner de vulnérabilités avec Trivy
       - name: Run Trivy vulnerability scanner in FS mode - table logs
         continue-on-error: true
@@ -73,9 +71,18 @@ jobs:
         with:
           sarif_file: trivy-results.sarif
 
-          
+  semgrep-scan:
+    name: Semgrep Scan
+    runs-on: ubuntu-20.04
+    steps:          
       # 2. Analyse de sécurité avec Semgrep
-      - name: Install Sempgrp
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --user pipx
+          python3 -m pipx ensurepath
+          pip install pyyaml requests
+      
+      - name: Install Sempgrep
         run: |
           python3 -m pip install --user pipx
           python3 -m pipx ensurepath
@@ -94,6 +101,10 @@ jobs:
         with:
           sarif_file: semgrep-results.sarif
 
+  ansible-lint-scan:
+    name: Ansible lint Scan
+    runs-on: ubuntu-20.04
+    steps:      
       # 3. Analyse de qualité et de bonnes pratiques avec Ansible Lint
       - name: Install Ansible Lint
         run: sudo apt-get update && sudo apt-get install -y ansible-lint
@@ -101,6 +112,10 @@ jobs:
         continue-on-error: true
         run: ansible-lint .
 
+  checkov-scan:
+    name: Checkov Scan
+    runs-on: ubuntu-20.04
+    steps:      
       # 4. Analyse avec Checkov
       - name: Run Checkov scan
         continue-on-error: true
@@ -121,6 +136,11 @@ jobs:
         with:
           sarif_file: checkov-results/results_sarif.sarif
 
+
+  kics-scan:
+    name: Kics Scan
+    runs-on: ubuntu-20.04
+    steps:      
       # 5. Analyse avec Checkov
       - name: Run KICS Scan
         continue-on-error: true
