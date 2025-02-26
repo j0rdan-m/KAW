@@ -21,7 +21,7 @@ jobs:
           ls -l ${{ github.workspace }}
           
       - name: Run Vulnerability Scanner Action
-        uses: j0rdan-m/ansible-vulnerability-scanner@be953d41508380db43c3356590995b692beecbe2
+        uses: j0rdan-m/ansible-vulnerability-scanner@cebb1ddc55facd2d9ad3c63a3ff75bf3b104d905
         with:
           artifact_path: '.' 
           report_format: sarif
