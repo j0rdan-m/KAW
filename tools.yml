@@ -34,7 +34,7 @@
             win_chocolatey:
                     name: firefox
                     state: present
-                    version: 103
+                    version: 102
  
           - name: Install WinDirStat (open-source spacemonger-like)
             win_chocolatey:
