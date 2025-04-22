@@ -10,7 +10,7 @@ permissions:
 jobs:
   ansible-vuln-scan:
     name: Ansible Vulnerability Scan
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -36,7 +36,7 @@ jobs:
   
   trivy-scan:
     name: Trivy Scan
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       # 1. Scanner de vulnérabilités avec Trivy
       - name: Run Trivy vulnerability scanner in FS mode - table logs
@@ -73,7 +73,7 @@ jobs:
 
   semgrep-scan:
     name: Semgrep Scan
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:          
       # 2. Analyse de sécurité avec Semgrep
       - name: Install dependencies
@@ -103,7 +103,7 @@ jobs:
 
   ansible-lint-scan:
     name: Ansible lint Scan
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:      
       # 3. Analyse de qualité et de bonnes pratiques avec Ansible Lint
       - name: Install Ansible Lint
@@ -114,7 +114,7 @@ jobs:
 
   checkov-scan:
     name: Checkov Scan
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:      
       # 4. Analyse avec Checkov
       - name: Run Checkov scan
@@ -139,7 +139,7 @@ jobs:
 
   kics-scan:
     name: Kics Scan
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:      
       # 5. Analyse avec Checkov
       - name: Run KICS Scan
