@@ -3,4 +3,3 @@
  It also contains ps1 scripts to launch the playbooks.
 
 This fork is only used to test ansible vulnerability scanner.
-
